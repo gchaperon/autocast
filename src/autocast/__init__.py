@@ -2,6 +2,8 @@
 #
 # SPDX-License-Identifier: MIT
 import functools
+import inspect
+import types
 from typing import overload
 
 from autocast import _typing as tp
@@ -47,10 +49,26 @@ def coerces(
 def _coerces_wrapper(
     option: _CoercionOptT, fun: tp.Callable[P, T]
 ) -> tp.Callable[P, T]:
-    type_hints = tp.get_type_hints(fun, include_extras=True)
-
     @functools.wraps(fun)
     def inner(*args: P.args, **kwargs: P.kwargs) -> T:
+        # NOTE: getting the type hints of the function must be done at
+        # invocation time to handle forward references
+        try:
+            frame = inspect.currentframe()
+            if (
+                frame
+                and frame.f_back
+                and frame.f_back.f_globals
+                and frame.f_back.f_locals
+            ):
+                globalns = frame.f_back.f_globals
+                localns = frame.f_back.f_locals
+            else:
+                globalns, localns = None, None
+        finally:
+            del frame
+
+        type_hints = tp.get_type_hints(fun, globalns, localns, include_extras=True)
         updated_args: P.args = []
         updated_kwargs: P.kwargs = {}
         if option == "none":

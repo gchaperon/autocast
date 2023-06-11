@@ -57,20 +57,21 @@ cov = [
 python = ["3.7", "3.8", "3.9", "3.10", "3.11", "pypy3.9"]
 
 [tool.hatch.envs.lint]
+detached = true
 dependencies = [
   "black>=23.1.0",
   "mypy>=1.0.0",
   "ruff>=0.0.243",
 ]
 [tool.hatch.envs.lint.scripts]
-typing = "mypy --install-types --non-interactive {args:src/autocast tests}"
+typing = "mypy {args:src/autocast tests}"
 style = [
-  "ruff {args:.}",
-  "black --check --diff {args:.}",
+  "ruff {args:src tests}",
+  "black --check --diff {args:src tests}",
 ]
 fmt = [
-  "black {args:.}",
-  "ruff --fix {args:.}",
+  "black {args:src tests}",
+  "ruff --fix {args:src tests}",
   "style",
 ]
 all = [
@@ -156,3 +157,7 @@ exclude_lines = [
   "if __name__ == .__main__.:",
   "if TYPE_CHECKING:",
 ]
+
+[tool.mypy]
+install_types = true
+non_interactive = true
